@@ -122,6 +122,7 @@ macro_rules! impl_context {
         }
 
         impl std::error::Error for $out {}
+        impl std::error::Error for &$out {}
 
         impl AsRef<$ty> for $out {
             fn as_ref(&self) -> &$ty {
