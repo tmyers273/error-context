@@ -3,6 +3,13 @@
 version = 3
 
 [[package]]
+name = "error-context"
+version = "0.1.0"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.84"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -38,13 +45,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c546c80d6be4bc6a00c0f01730c08df82eaa7a7a61f11d656526506112cc1709"
 dependencies = [
  "thiserror-impl",
-]
-
-[[package]]
-name = "thiserror-context"
-version = "0.1.0"
-dependencies = [
- "thiserror",
 ]
 
 [[package]]

@@ -1,5 +1,5 @@
 [package]
-name = "thiserror-context"
+name = "error-context"
 version = "0.1.0"
 edition = "2021"
 
