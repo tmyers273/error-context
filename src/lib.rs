@@ -10,7 +10,7 @@
 //! ** Example **
 //! ```
 //! use thiserror::Error;
-//! use thiserror_context::{Context, impl_context};
+//! use error_context::{Context, impl_context};
 //!
 //! #[derive(Debug, Error)]
 //! pub enum MyErrorInner {
@@ -115,8 +115,8 @@ macro_rules! impl_context {
             }
         }
 
-        impl Display for $out {
-            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        impl std::fmt::Display for $out {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 f.write_fmt(format_args!("{}", self.as_ref()))
             }
         }
