@@ -51,7 +51,7 @@
 //!
 //! [thiserror]: https://docs.rs/thiserror
 //! [anyhow]: https://docs.rs/anyhow
-use std::fmt::Display;
+use std::fmt::{Display, Formatter};
 
 /// Defines a new struct that wraps the error type, allowing additional
 /// context to be added.
@@ -112,6 +112,12 @@ macro_rules! impl_context {
                     f.write_fmt(format_args!("    {i}: {}\n", context))?;
                 }
                 Ok(())
+            }
+        }
+
+        impl Display for $out {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                f.write_fmt(format_args!("{}", self.as_ref()))
             }
         }
 
