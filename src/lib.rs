@@ -1,7 +1,7 @@
-//! This library provides a wrapper around an existing (and usually strongly typed)
-//! error type, from which you can add additional context.
+//! This library provides a wrapper around an existing error type, from which you can
+//! add additional context.
 //!
-//! This is meant to provide the best of both worlds between [thiserror] and [anyhow]
+//! This is meant to provide the best of both worlds between [thiserror] and [anyhow],
 //! in that you retain the type of the underlying root error, while allowing you to
 //! add additional context to it.
 //!
@@ -25,16 +25,33 @@
 //! fn t(value: &str) -> Result<i64, MyError> {
 //!     let v: i64 = value
 //!         .parse()
-//!         .with_context(|| format!("failed to parse {}", value))?;
+//!         .context("some static context")
+//!         .with_context(|| format!("failed to parse \"{}\"", value))?;
 //!     Ok(v)
 //! }
 //!
+//! let r = t("fake");
+//! assert!(r.is_err());
+//! let err = r.unwrap_err();
+//! let debug_repr = format!("{:#?}", err);
+//! assert_eq!(r#"parse int err: invalid digit found in string
 //!
+//! Caused by:
+//!     0: failed to parse "fake"
+//!     1: some static context
+//! "#, debug_repr);
+//!
+//! // The underlying error type can still be accessed.
+//! // Either via a reference
+//! let inner_ref: &MyErrorInner = err.as_ref();
+//!
+//! // Or by moving it out
+//! let inner: MyErrorInner = err.into_inner();
 //! ```
 //!
 //! [thiserror]: https://docs.rs/thiserror
 //! [anyhow]: https://docs.rs/anyhow
-use std::fmt::{Debug, Display};
+use std::fmt::Display;
 
 /// Defines a new struct that wraps the error type, allowing additional
 /// context to be added.
@@ -109,8 +126,8 @@ macro_rules! impl_context {
             }
         }
 
-        impl<T, E: Into<$out>> Context<T, E, $out> for Result<T, E> {
-            fn context<C>(self, context: C) -> Result<T, $out>
+        impl<Z, E: Into<$out>> Context<$out, Z, E> for Result<Z, E> {
+            fn context<C>(self, context: C) -> Result<Z, $out>
             where
                 C: std::fmt::Display + Send + Sync + 'static,
             {
@@ -126,7 +143,7 @@ macro_rules! impl_context {
                 }
             }
 
-            fn with_context<C, F>(self, f: F) -> Result<T, $out>
+            fn with_context<C, F>(self, f: F) -> Result<Z, $out>
             where
                 C: std::fmt::Display + Send + Sync + 'static,
                 F: FnOnce() -> C,
@@ -146,7 +163,7 @@ macro_rules! impl_context {
     };
 }
 
-pub trait Context<T, E, W>
+pub trait Context<W, T, E>
 where
     E: Into<W>,
 {
