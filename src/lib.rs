@@ -106,7 +106,7 @@ macro_rules! impl_context {
         impl std::fmt::Debug for $out {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
                 let (context, root) = self.all(vec![]);
-                f.write_fmt(format_args!("{}\n\nCaused by:\n", root))?;
+                f.write_fmt(format_args!("{:?}\n\nCaused by:\n", root))?;
 
                 for (i, context) in context.iter().enumerate() {
                     f.write_fmt(format_args!("    {i}: {}\n", context))?;
