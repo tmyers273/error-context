@@ -283,33 +283,7 @@ mod composable_tests {
         T(DummyError),
     }
 
-    impl From<DummyError> for Other {
-        fn from(mut value: DummyError) -> Self {
-            let mut contexts = vec![];
-
-            let inner = loop {
-                match value {
-                    DummyError::Base(x) => break x,
-                    DummyError::Context { context, error } => {
-                        contexts.push(context);
-                        value = *error;
-                    }
-                }
-            };
-            let inner = DummyError::Base(inner);
-
-            let mut x = Other::Base(OtherInner::T(inner));
-
-            for ctx in contexts.into_iter().rev() {
-                x = Other::Context {
-                    context: ctx,
-                    error: Box::new(x),
-                };
-            }
-
-            x
-        }
-    }
+    impl_from_carry_context!(DummyError, Other, OtherInner::T);
 
     impl_context!(Other(OtherInner));
 
