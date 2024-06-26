@@ -51,6 +51,8 @@
 //!
 //! [thiserror]: https://docs.rs/thiserror
 //! [anyhow]: https://docs.rs/anyhow
+mod composition;
+
 use std::fmt::Display;
 
 /// Defines a new struct that wraps the error type, allowing additional
@@ -106,7 +108,11 @@ macro_rules! impl_context {
         impl std::fmt::Debug for $out {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
                 let (context, root) = self.all(vec![]);
-                f.write_fmt(format_args!("{:?}\n\nCaused by:\n", root))?;
+                f.write_fmt(format_args!("{:?}", root))?; //Caused by:\n", root))?;
+
+                if !context.is_empty() {
+                    f.write_fmt(format_args!("\n\nCaused by:\n"))?;
+                }
 
                 for (i, context) in context.iter().enumerate() {
                     f.write_fmt(format_args!("    {i}: {}\n", context))?;
@@ -201,12 +207,6 @@ mod tests {
         ParseInt(#[from] std::num::ParseIntError),
     }
 
-    #[derive(Debug, Error)]
-    pub enum Other {
-        #[error("t {0}")]
-        T(#[from] DummyError),
-    }
-
     impl_context!(DummyError(DummyErrorInner));
 
     fn t() -> Result<(), DummyError> {
@@ -216,18 +216,16 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let r: Result<(), DummyErrorInner> = Err(DummyErrorInner::Dummy);
-
-        let r = r
+        let r = t()
             .context("first")
-            .with_context(|| format!("second dynamic"))
-            .context("third");
+            .with_context::<String, _>(|| format!("second dynamic"))
+            .context("third"); //: Result<(), DummyError> = Err(DummyErrorInner::Dummy.into());
 
-        let r = format!("{:#?}", r.unwrap_err());
+        let res = format!("{:#?}", r.as_ref().unwrap_err());
 
         assert_eq!(
-            r,
-            "dummy err msg\n\nCaused by:\n    0: third\n    1: second dynamic\n    2: first\n"
+            res,
+            "ParseInt(ParseIntError { kind: InvalidDigit })\n\nCaused by:\n    0: third\n    1: second dynamic\n    2: first\n"
         );
     }
 
@@ -239,7 +237,73 @@ mod tests {
 
         assert_eq!(
             r,
-            "parse int err: invalid digit found in string\n\nCaused by:\n    0: second\n    1: parsing test\n",
+            "ParseInt(ParseIntError { kind: InvalidDigit })\n\nCaused by:\n    0: second\n    1: parsing test\n",
+        );
+    }
+
+    #[test]
+    fn no_contrext_omits_causation() {
+        let r = t();
+
+        let r = format!("{:#?}", r.unwrap_err());
+
+        assert_eq!(r, "ParseInt(ParseIntError { kind: InvalidDigit })",);
+    }
+}
+
+#[cfg(test)]
+mod composable_tests {
+    use super::*;
+    use inner::DummyError;
+    use thiserror::Error;
+
+    mod inner {
+        use crate::Context;
+        use thiserror::Error;
+
+        #[derive(Debug, Error)]
+        pub enum DummyErrorInner {
+            #[error("dummy err msg")]
+            Dummy,
+            #[error("parse int err: {0}")]
+            ParseInt(#[from] std::num::ParseIntError),
+        }
+        impl_context!(DummyError(DummyErrorInner));
+
+        pub fn t() -> Result<(), DummyError> {
+            Err::<(), DummyErrorInner>(DummyErrorInner::Dummy.into())
+                .context("first")
+                .context("second")
+        }
+    }
+
+    #[derive(Debug, Error)]
+    pub enum OtherInner {
+        #[error("t {0}")]
+        T(DummyError),
+    }
+
+    impl_from_carry_context!(DummyError, Other, OtherInner::T);
+
+    impl_context!(Other(OtherInner));
+
+    fn wrapped() -> Result<(), Other> {
+        _wrapped().context("fourth")
+    }
+
+    fn _wrapped() -> Result<(), Other> {
+        inner::t().context("third")
+    }
+
+    #[test]
+    fn it_is_composable() {
+        let r = wrapped();
+
+        let r = format!("{:#?}", r.unwrap_err());
+
+        assert_eq!(
+            r,
+            "T(Dummy)\n\nCaused by:\n    0: fourth\n    1: third\n    2: second\n    3: first\n",
         );
     }
 }
