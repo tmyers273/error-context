@@ -51,7 +51,7 @@
 //!
 //! [thiserror]: https://docs.rs/thiserror
 //! [anyhow]: https://docs.rs/anyhow
-mod composition;
+pub mod composition;
 
 use std::fmt::Display;
 
