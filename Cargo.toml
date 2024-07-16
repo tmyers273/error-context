@@ -7,6 +7,7 @@ license = "MIT OR Apache-2.0"
 keywords = ["thiserror", "anyhow", "error", "error-context", "context"]
 categories = []
 publish = true
+description = "A wrapper around thiserror, giving you the ability to add context"
 
 [dev-dependencies]
 anyhow = "1.0.86"
