@@ -2,6 +2,11 @@
 name = "error-context"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/tmyers273/error-context"
+license = "MIT OR Apache-2.0"
+keywords = ["thiserror", "anyhow", "error", "error-context", "context"]
+categories = []
+publish = ["error-context"]
 
 [dev-dependencies]
 anyhow = "1.0.86"
