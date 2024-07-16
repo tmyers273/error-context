@@ -1,5 +1,5 @@
 [package]
-name = "error-context"
+name = "thiserror-context"
 version = "0.1.0"
 edition = "2021"
 repository = "https://github.com/tmyers273/error-context"
