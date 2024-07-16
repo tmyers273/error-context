@@ -11,7 +11,7 @@
 //! ## With [thiserror]
 //!
 //! Using [thiserror], you can end up with errors similar to
-//! ```test
+//! ```text
 //! Sqlx(RowNotFound)
 //! ```
 //! which is not helpful in debugging.
