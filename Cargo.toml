@@ -6,7 +6,7 @@ repository = "https://github.com/tmyers273/error-context"
 license = "MIT OR Apache-2.0"
 keywords = ["thiserror", "anyhow", "error", "error-context", "context"]
 categories = []
-publish = ["error-context"]
+publish = true
 
 [dev-dependencies]
 anyhow = "1.0.86"
