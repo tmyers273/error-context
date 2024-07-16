@@ -6,14 +6,18 @@
 ///   2. Source is a variant of Target's inner error
 ///
 /// ** Example **
-/// ```ignore
+/// ```
+/// use thiserror::Error;
+///
+/// use error_context::{Context, impl_context, impl_from_carry_context};
+///
 /// // Some inner error type
 /// #[derive(Debug, Error)]
 /// pub enum InnerError {
 ///     #[error("dummy")]
 ///     Dummy,
 /// }
-/// impl_context(Inner(InnerError));
+/// impl_context!(Inner(InnerError));
 ///
 /// // And some outer error type, which contains
 /// // a variant of the inner error type
@@ -23,13 +27,32 @@
 ///     // we explicitly do _not_ use #[from] here, instead
 ///     // opting to use the macro to create the conversion
 ///     // and handle the context propagation.
-///     Inner(InnerError),
+///     Inner(Inner),
 /// }
-/// impl_context(Outer(OuterError));
+/// impl_context!(Outer(OuterError));
 ///
 /// // Then we use the macro to implement the conversion
 /// // from Inner to Outer
 /// impl_from_carry_context!(Inner, Outer, OuterError::Inner);
+///
+/// fn inner_call() -> Result<(), Inner> {
+///     Err(InnerError::Dummy)
+///         .context("context on inner")
+/// }
+///
+/// fn outer_call() -> Result<(), Outer> {
+///     inner_call().context("context on outer")
+/// }
+///
+/// let r = outer_call();
+/// assert!(r.is_err());
+/// let e = r.unwrap_err();
+/// assert_eq!(format!("{:?}",e), r#"Inner(Dummy)
+///
+/// Caused by:
+///     0: context on outer
+///     1: context on inner
+/// "#);
 /// ```
 #[macro_export]
 macro_rules! impl_from_carry_context {
