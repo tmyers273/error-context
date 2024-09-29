@@ -156,7 +156,7 @@
 //! ** Example **
 //! ```
 //! use thiserror::Error;
-//! use error_context::{Context, impl_context};
+//! use thiserror_context::{Context, impl_context};
 //!
 //! // A normal, run-of-the-mill thiserror enum
 //! #[derive(Debug, Error)]
@@ -208,7 +208,7 @@
 //!
 //! ```
 //! use thiserror::Error;
-//! use error_context::{Context, impl_context};
+//! use thiserror_context::{Context, impl_context};
 //!
 //! #[derive(Debug, Error)]
 //! enum ThisErrorInner {
@@ -288,7 +288,7 @@ macro_rules! impl_context {
             }
 
             /// Returns all the context messages and the root error.
-            fn all<'a>(&'a self, mut context: Vec<&'a String>) -> (Vec<&String>, &$ty) {
+            fn all<'a>(&'a self, mut context: Vec<&'a String>) -> (Vec<&'a String>, &'a $ty) {
                 match self {
                     $out::Base(b) => (context, b),
                     $out::Context { error, context: c } => {
@@ -443,6 +443,27 @@ mod tests {
 
         assert_eq!(r, "ParseInt(ParseIntError { kind: InvalidDigit })",);
     }
+
+    #[test]
+    fn multiple_errors_same_from() {
+        use crate::Context;
+
+        #[derive(Debug, Error)]
+        pub enum AnotherDummyErrorInner {
+            #[error("dummy err msg")]
+            Dummy,
+            #[error("parse int err: {0}")]
+            ParseInt(#[from] std::num::ParseIntError),
+        }
+        impl_context!(AnotherDummyError(AnotherDummyErrorInner));
+        fn v() -> Result<(), AnotherDummyError> {
+            let _: i64 = "fake".parse()?;
+            Ok(())
+        }
+        assert!(v()
+            .context("Adding context shouldn't cause build error")
+            .is_err());
+    }
 }
 
 #[cfg(test)]
@@ -486,7 +507,8 @@ mod composable_tests {
     }
 
     fn _wrapped() -> Result<(), Other> {
-        inner::t().context("third")
+        let r: Result<(), DummyError> = inner::t();
+        r.context("third")
     }
 
     #[test]

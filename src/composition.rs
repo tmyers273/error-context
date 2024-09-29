@@ -8,8 +8,7 @@
 /// ** Example **
 /// ```
 /// use thiserror::Error;
-///
-/// use error_context::{Context, impl_context, impl_from_carry_context};
+/// use thiserror_context::{Context, impl_context, impl_from_carry_context};
 ///
 /// // Some inner error type
 /// #[derive(Debug, Error)]
