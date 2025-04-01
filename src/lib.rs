@@ -334,7 +334,7 @@ macro_rules! impl_context {
             }
         }
 
-        impl<Z, E: Into<$out>> Context<$out, Z, E> for Result<Z, E> {
+        impl<Z, E: Into<$out>> $crate::Context<$out, Z, E> for Result<Z, E> {
             fn context<C>(self, context: C) -> Result<Z, $out>
             where
                 C: std::fmt::Display + Send + Sync + 'static,
