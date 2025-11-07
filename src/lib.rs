@@ -300,7 +300,7 @@ macro_rules! impl_context {
         }
 
         impl std::fmt::Debug for $out {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 let (context, root) = self.all(vec![]);
                 f.write_fmt(format_args!("{:?}", root))?; //Caused by:\n", root))?;
 
@@ -334,8 +334,8 @@ macro_rules! impl_context {
             }
         }
 
-        impl<Z, E: Into<$out>> Context<$out, Z, E> for Result<Z, E> {
-            fn context<C>(self, context: C) -> Result<Z, $out>
+        impl<Z, E: Into<$out>> Context<$out, Z, E> for core::result::Result<Z, E> {
+            fn context<C>(self, context: C) -> core::result::Result<Z, $out>
             where
                 C: std::fmt::Display + Send + Sync + 'static,
             {
@@ -351,7 +351,7 @@ macro_rules! impl_context {
                 }
             }
 
-            fn with_context<C, F>(self, f: F) -> Result<Z, $out>
+            fn with_context<C, F>(self, f: F) -> core::result::Result<Z, $out>
             where
                 C: std::fmt::Display + Send + Sync + 'static,
                 F: FnOnce() -> C,
@@ -376,13 +376,13 @@ where
     E: Into<W>,
 {
     /// Wrap the error value with additional context.
-    fn context<C>(self, context: C) -> Result<T, W>
+    fn context<C>(self, context: C) -> core::result::Result<T, W>
     where
         C: Display + Send + Sync + 'static;
 
     /// Wrap the error value with additional context that is evaluated lazily
     /// only once an error does occur.
-    fn with_context<C, F>(self, f: F) -> Result<T, W>
+    fn with_context<C, F>(self, f: F) -> core::result::Result<T, W>
     where
         C: Display + Send + Sync + 'static,
         F: FnOnce() -> C;
@@ -521,5 +521,23 @@ mod composable_tests {
             r,
             "T(Dummy)\n\nCaused by:\n    0: fourth\n    1: third\n    2: second\n    3: first\n",
         );
+    }
+
+    #[test]
+    fn result_is_not_conflict() {
+        use crate::Context;
+
+        #[derive(Debug, thiserror::Error)]
+        pub enum DummyErrorInner {
+            #[error("dummy err msg")]
+            Dummy,
+        }
+
+        impl_context!(DummyError(DummyErrorInner));
+
+        #[allow(dead_code)]
+        type Result = core::result::Result<(), DummyError>;
+
+        // note: no actual code to succeed -- compilation is success
     }
 }
